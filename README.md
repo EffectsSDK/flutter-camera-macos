@@ -14,6 +14,9 @@ Can take pictures and record videos, even with external cameras.
 
 ---
 
+## EffectsSDK usage
+To use this camera with EffectsSDK you need to add [TSVB.xcframework](https://github.com/EffectsSDK/ios-xcframework-integration-sample) to your XCode project.
+
 ## Basic usage
 
 Integrate ```CameraMacOSView``` in your widget tree.
