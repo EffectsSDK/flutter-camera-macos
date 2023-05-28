@@ -22,6 +22,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     // Image to be sent to the texture
     var latestBuffer: CVImageBuffer!
     
+    // Buffer hold processed image for photo
+    var processedBuffer: CVImageBuffer!
+    
     // The asset writer to write a file on disk
     var videoWriter: AVAssetWriter!
     
@@ -48,6 +51,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var savedResult: FlutterResult!
     var factory: CameraMacOSNativeFactory!
     var previewLayer: AVCaptureVideoPreviewLayer!
+    
+    // EffectsSDK processor
+    var effectsSKDProcessor: EffectsSDKProcessor!
 
     
     init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
@@ -70,6 +76,21 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         if latestBuffer == nil {
             return nil
         }
+        
+        guard let isAnyEffectActive = effectsSKDProcessor?.AnyEffectActive() else {
+            return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
+        }
+        
+        if isAnyEffectActive {
+            guard let returnBuffer = effectsSKDProcessor?.Process(cameraBuffer: latestBuffer) else {
+                return nil
+            }
+            
+            processedBuffer = returnBuffer
+                        
+            return Unmanaged<CVPixelBuffer>.passRetained(returnBuffer)
+        }
+
         return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
     
@@ -310,6 +331,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     self.videoOutputWidth = dimensions.width
                     let size = ["width": Double(dimensions.width), "height": Double(dimensions.height)]
                     
+                    self.effectsSKDProcessor = EffectsSDKProcessor(self.videoOutputWidth, self.videoOutputHeight)
+                    
                     if self.useMovieFileOutput {
                         if let previewLayer = self.previewLayer, let _ = previewLayer.superlayer {
                             previewLayer.removeFromSuperlayer()
@@ -355,7 +378,18 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func takePicture(_ result: @escaping FlutterResult) {
-        guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer), let imageData = nsImage.tiffRepresentation, !imageData.isEmpty else {
+        
+        var currentBuffer: CVImageBuffer?
+        
+        if processedBuffer != nil {
+            currentBuffer = processedBuffer
+            
+            processedBuffer = nil
+        } else {
+            currentBuffer = latestBuffer
+        }
+        
+        guard let imageBuffer = currentBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer), let imageData = nsImage.tiffRepresentation, !imageData.isEmpty else {
             result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
             return
         }
@@ -616,6 +650,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func destroy(_ result: @escaping FlutterResult) {
+        self.effectsSKDProcessor.destroy()
+        
         if (self.videoDevice == nil) {
             result(FlutterError(code: "CAMERA_DESTROY_ERROR",
                                 message: "Called destroy() while already destroyed!",
