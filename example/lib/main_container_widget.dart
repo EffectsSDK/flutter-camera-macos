@@ -1,8 +1,8 @@
-import 'package:camera_macos/camera_macos_view.dart';
-import 'package:camera_macos/camera_macos_controller.dart';
+import 'package:camera_macos/effects_sdk_camera_macos_view.dart';
+import 'package:camera_macos/effects_sdk_camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_device.dart';
-import 'package:camera_macos/camera_macos_platform_interface.dart';
+import 'package:camera_macos/effects_sdk_camera_macos_platform_interface.dart';
 import 'package:camera_macos/exceptions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,7 @@ class MainContainerWidget extends StatefulWidget {
 }
 
 class MainContainerWidgetState extends State<MainContainerWidget> {
-  CameraMacOSController? macOSController;
+  CameraEffectsSDKMacOSController? macOSController;
   late CameraMacOSMode cameraMode;
   late TextEditingController durationController;
   late double durationValue;
@@ -67,8 +67,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
     return label;
   }
 
-  Future<String> get videoFilePath async => pathJoiner.join(
-      (await getApplicationDocumentsDirectory()).path, "output.mp4");
+  Future<String> get videoFilePath async => pathJoiner.join((await getApplicationDocumentsDirectory()).path, "output.mp4");
 
   @override
   Widget build(BuildContext context) {
@@ -103,8 +102,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 isExpanded: true,
                                 value: selectedVideoDevice,
                                 underline: Container(color: Colors.transparent),
-                                items: videoDevices
-                                    .map((CameraMacOSDevice device) {
+                                items: videoDevices.map((CameraMacOSDevice device) {
                                   return DropdownMenuItem(
                                     value: device.deviceId,
                                     child: Text(device.deviceId),
@@ -148,8 +146,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 isExpanded: true,
                                 value: selectedAudioDevice,
                                 underline: Container(color: Colors.transparent),
-                                items: audioDevices
-                                    .map((CameraMacOSDevice device) {
+                                items: audioDevices.map((CameraMacOSDevice device) {
                                   return DropdownMenuItem(
                                     value: device.deviceId,
                                     child: Text(device.deviceId),
@@ -178,16 +175,14 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                     child: Stack(
                       alignment: Alignment.bottomRight,
                       children: [
-                        selectedVideoDevice != null &&
-                                selectedVideoDevice!.isNotEmpty
+                        selectedVideoDevice != null && selectedVideoDevice!.isNotEmpty
                             ? CameraMacOSView(
                                 key: cameraKey,
                                 deviceId: selectedVideoDevice,
                                 audioDeviceId: selectedAudioDevice,
                                 fit: BoxFit.fill,
                                 cameraMode: CameraMacOSMode.photo,
-                                onCameraInizialized:
-                                    (CameraMacOSController controller) {
+                                onCameraInizialized: (CameraEffectsSDKMacOSController controller) {
                                   setState(() {
                                     macOSController = controller;
                                   });
@@ -232,6 +227,27 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  "EffectsSDK example",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(height: 10),
+                MaterialButton(
+                  color: Colors.lightBlue,
+                  textColor: Colors.white,
+                  child: Text('Enable Blur'),
+                  onPressed: enableBlur,
+                ),
+                Container(height: 10),
+                MaterialButton(
+                  color: Colors.lightBlue,
+                  textColor: Colors.white,
+                  child: Text('Disable blur'),
+                  onPressed: disableBlur,
+                ),
+                Container(height: 10),
+                Text(
                   "Settings",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -261,8 +277,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                             contentPadding: EdgeInsets.zero,
                             tristate: false,
                             controlAffinity: ListTileControlAffinity.leading,
-                            title: Text(
-                                "Use Platform View (Experimental - Not Working)"),
+                            title: Text("Use Platform View (Experimental - Not Working)"),
                             onChanged: (bool? newValue) {
                               setState(() {
                                 this.usePlatformView = newValue ?? false;
@@ -309,8 +324,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 visible: cameraMode == CameraMacOSMode.video,
                                 child: Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12.0),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                     child: TextField(
                                       controller: durationController,
                                       decoration: InputDecoration(
@@ -338,8 +352,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                       child: Builder(
                         builder: (context) {
                           String buttonText = "Destroy";
-                          if (macOSController != null &&
-                              macOSController!.isDestroyed) {
+                          if (macOSController != null && macOSController!.isDestroyed) {
                             buttonText = "Reinitialize";
                           }
                           return Text(buttonText);
@@ -370,8 +383,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         maxVideoDuration: durationValue,
         url: urlPath,
         enableAudio: enableAudio,
-        onVideoRecordingFinished:
-            (CameraMacOSFile? result, CameraMacOSException? exception) {
+        onVideoRecordingFinished: (CameraMacOSFile? result, CameraMacOSException? exception) {
           setState(() {});
           if (exception != null) {
             showAlert(message: exception.toString());
@@ -392,8 +404,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
 
   Future<void> listVideoDevices() async {
     try {
-      List<CameraMacOSDevice> videoDevices =
-          await CameraMacOS.instance.listDevices(
+      List<CameraMacOSDevice> videoDevices = await CameraMacOS.instance.listDevices(
         deviceType: CameraMacOSDeviceType.video,
       );
       setState(() {
@@ -409,8 +420,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
 
   Future<void> listAudioDevices() async {
     try {
-      List<CameraMacOSDevice> audioDevices =
-          await CameraMacOS.instance.listDevices(
+      List<CameraMacOSDevice> audioDevices = await CameraMacOS.instance.listDevices(
         deviceType: CameraMacOSDeviceType.audio,
       );
       setState(() {
@@ -426,9 +436,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
 
   void changeCameraMode() {
     setState(() {
-      cameraMode = cameraMode == CameraMacOSMode.photo
-          ? CameraMacOSMode.video
-          : CameraMacOSMode.photo;
+      cameraMode = cameraMode == CameraMacOSMode.photo ? CameraMacOSMode.video : CameraMacOSMode.photo;
     });
   }
 
@@ -449,6 +457,14 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
     }
   }
 
+  Future<void> enableBlur() async {
+    await macOSController!.setBlur(0.5);
+  }
+
+  Future<void> disableBlur() async {
+    await macOSController!.clearBlur();
+  }
+
   Future<void> onCameraButtonTap() async {
     try {
       if (macOSController != null) {
@@ -467,8 +483,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
             break;
           case CameraMacOSMode.video:
             if (macOSController!.isRecording) {
-              CameraMacOSFile? videoData =
-                  await macOSController!.stopRecording();
+              CameraMacOSFile? videoData = await macOSController!.stopRecording();
               if (videoData != null) {
                 setState(() {
                   lastRecordedVideoData = videoData.bytes;

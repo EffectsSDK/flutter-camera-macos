@@ -114,9 +114,107 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             stopRecording(result)
         case "destroy":
             destroy(result)
+        case "setBlur":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            setBlur(arguments, result)
+        case "clearBlur":
+            clearBlur(result)
+        case "setBeautificationLevel":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            setBeautification(arguments, result)
+        case "clearBeautification":
+            clearBeautification(result)
+        case "setBackgroundImage":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            setBackgroundImage(arguments, result)
+        case "setBackgroundColor":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            setBacgroundColor(arguments, result)
+        case "clearBackground":
+            clearBackground(result)
+        case "getFrameDataBuffer":
+            getFrameDataBuffer(result)
+        
         default:
             result(FlutterMethodNotImplemented)
         }
+    }
+    
+    func setBlur(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        guard let blurPower = arguments["blurPower"] as? Float else {
+            result(false)
+            return
+        }
+        result(effectsSKDProcessor.SetBlur(blurPower: blurPower))
+    }
+    
+    func clearBlur(_ result: @escaping FlutterResult) {
+        result(effectsSKDProcessor.ClearBlur())
+    }
+    
+    func setBeautification(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        guard let beautificationLevel = arguments["beautificationLevel"] as? Float else {
+            result(false)
+            return
+        }
+        result(effectsSKDProcessor.SetBeautification(beautificationLevel: beautificationLevel))
+    }
+    
+    func clearBeautification(_ result: @escaping FlutterResult) {
+        result(effectsSKDProcessor.ClearBeautification())
+    }
+    
+    func setBackgroundImage(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        guard let backgroundImageUrl = arguments["backgroundImageUrl"] as? String else {
+            result(false)
+            return
+        }
+        result(effectsSKDProcessor.SetBackgroundImage(pathToImage: backgroundImageUrl))
+    }
+    
+    func setBacgroundColor(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        guard let color = arguments["backgroundColor"] as? UInt32 else {
+            result(false)
+            return
+        }
+        result(effectsSKDProcessor.SetBackgroundColor(color: color))
+    }
+    
+    func clearBackground(_ result: @escaping FlutterResult) {
+        result(effectsSKDProcessor.ClearBackground())
+    }
+    
+    func getFrameDataBuffer(_ result: @escaping FlutterResult) {
+        var currentBuffer: CVImageBuffer?
+        
+        if processedBuffer != nil {
+            currentBuffer = processedBuffer
+            
+            processedBuffer = nil
+        } else {
+            currentBuffer = latestBuffer
+        }
+        
+        if currentBuffer == nil {
+            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Camera not initialized", details: nil).toFlutterResult)
+        }
+        
+        
+        CVPixelBufferLockBaseAddress(currentBuffer!, CVPixelBufferLockFlags.readOnly)
+        guard let pixelBufferAdress = CVPixelBufferGetBaseAddress(currentBuffer!) else {
+            return
+        }
+        
+        let intPtr = UInt(bitPattern: pixelBufferAdress)
+        
+        let size = videoOutputWidth * videoOutputHeight * 4
+        
+        CVPixelBufferUnlockBaseAddress(currentBuffer!, CVPixelBufferLockFlags.readOnly)
+        
+        result([
+            "dataPtr": String(intPtr),
+            "size": String(size)
+        ])
     }
     
     func requestPermission(completionHandler: @escaping (Bool) -> Void) {

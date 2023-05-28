@@ -64,41 +64,57 @@ public class EffectsSDKProcessor {
         return blurOn_ || beautificationOn_ || backgroundOn_
     }
     
-    public func SetBlur(blurPower: Float) {
+    public func SetBlur(blurPower: Float) -> Bool {
         if pipeline_ != nil && !blurOn_ {
             blurPower_ = blurPower
             pipeline_?.enableBlurBackground(withPower: blurPower_)
             blurOn_ = true
+            
+            return true
         }
+        
+        return false
     }
     
-    public func ClearBlur() {
+    public func ClearBlur() -> Bool {
         if pipeline_ != nil && blurOn_ {
             blurOn_ = false
             
             pipeline_?.disableBlurBackground()
             blurPower_ = -1.0
+            
+            return true
         }
+        
+        return false
     }
     
-    public func SetBeautification(beautificationLevel: Float) {
+    public func SetBeautification(beautificationLevel: Float) -> Bool {
         if pipeline_ != nil && !beautificationOn_ {
             beautificationLevel_ = beautificationLevel
             pipeline_?.beautificationLevel = beautificationLevel_
             pipeline_?.enableBeautification()
             beautificationOn_ = true
+            
+            return true
         }
+        
+        return false
     }
     
-    public func ClearBeautification() {
+    public func ClearBeautification() -> Bool {
         if pipeline_ != nil && beautificationOn_ {
             beautificationLevel_ = -1.0
             pipeline_?.disableBeautification()
             beautificationOn_ = false
+            
+            return true
         }
+        
+        return false
     }
     
-    public func SetBackgroundImage(pathToImage: String) {
+    public func SetBackgroundImage(pathToImage: String) -> Bool {
         if pipeline_ != nil && !backgroundOn_ {
             let controller: UnsafeMutablePointer<TSVBReplacementController?> =  UnsafeMutablePointer<TSVBReplacementController?>.allocate(capacity: 1)
             replacementController_ = AutoreleasingUnsafeMutablePointer<TSVBReplacementController?>.init(controller)
@@ -113,10 +129,14 @@ public class EffectsSDKProcessor {
             replacementController_?.pointee?.background = backgroundImage
                         
             backgroundOn_ = true
+            
+            return true
         }
+        
+        return false
     }
     
-    public func SetBackgroundColor(color: UInt32) {
+    public func SetBackgroundColor(color: UInt32) -> Bool {
         if pipeline_ != nil && !backgroundOn_ {
             let controller: UnsafeMutablePointer<TSVBReplacementController?> =  UnsafeMutablePointer<TSVBReplacementController?>.allocate(capacity: 1)
             replacementController_ = AutoreleasingUnsafeMutablePointer<TSVBReplacementController?>.init(controller)
@@ -153,15 +173,23 @@ public class EffectsSDKProcessor {
             replacementController_?.pointee?.background = background
             
             backgroundOn_ = true
+            
+            return true
         }
+        
+        return false
     }
     
-    public func ClearBackground() {
+    public func ClearBackground() -> Bool {
         if replacementController_ != nil && pipeline_ != nil && backgroundOn_ {
             backgroundOn_ = false
             pipeline_?.disableReplaceBackground()
             replacementController_ = nil
+            
+            return true
         }
+        
+        return false
     }
     
     public func Process(cameraBuffer: CVPixelBuffer) -> CVPixelBuffer? {
